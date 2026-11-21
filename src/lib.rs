@@ -2,6 +2,7 @@
 //! which kinds of lines they contain, how often, and when.
 
 pub mod histogram;
+pub mod input;
 pub mod json;
 pub mod level;
 pub mod mask;
