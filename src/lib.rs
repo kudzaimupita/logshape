@@ -2,4 +2,5 @@
 //! which kinds of lines they contain, how often, and when.
 
 pub mod level;
+pub mod mask;
 pub mod timestamp;
