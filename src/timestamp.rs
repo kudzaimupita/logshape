@@ -153,7 +153,7 @@ fn parse_time(b: &[u8], i: usize, need_seconds: bool) -> Option<(i64, usize)> {
     let m = num(b, i + 3, 2)?;
     let mut p = i + 5;
     let mut s = 0;
-    if b.get(p) == Some(&b':') && num(b, p + 1, 2).is_some() {
+    if b.get(p) == Some(&b':') && b.get(p + 1).is_some_and(u8::is_ascii_digit) {
         s = num(b, p + 1, 2)?;
         p += 3;
         if matches!(b.get(p), Some(b'.' | b',')) && b.get(p + 1).is_some_and(u8::is_ascii_digit) {
@@ -475,6 +475,7 @@ mod tests {
         assert_eq!(found("2023-02-29T00:00:00Z x"), None);
         assert!(found("2024-02-29T00:00:00Z x").is_some());
         assert_eq!(found("Jan 32 10:30:00 x"), None);
+        assert_eq!(found("2024-01-15T10:30:0 clipped"), None);
     }
 
     #[test]
