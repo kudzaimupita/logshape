@@ -269,16 +269,16 @@ lines:    5000000
 bytes:    508118548
 command:  target/release/logshape --json bench/data/synthetic-5000000-42.log > /dev/null
 
-run 1:  wall 10.94 s  cpu 8.18 s  457038 lines/s  46.4 MB/s  peak RSS 2.8 MiB
-run 2:  wall 9.36 s  cpu 7.64 s  534188 lines/s  54.3 MB/s  peak RSS 2.8 MiB
-run 3:  wall 11.81 s  cpu 8.56 s  423370 lines/s  43.0 MB/s  peak RSS 3.1 MiB
-run 4:  wall 12.37 s  cpu 7.49 s  404204 lines/s  41.1 MB/s  peak RSS 2.8 MiB
-run 5:  wall 4.37 s  cpu 3.92 s  1144165 lines/s  116.3 MB/s  peak RSS 2.8 MiB
+run 1:  wall 4.13 s  cpu 4.01 s  1210654 lines/s  123.0 MB/s  peak RSS 2.8 MiB
+run 2:  wall 4.13 s  cpu 3.98 s  1210654 lines/s  123.0 MB/s  peak RSS 3.1 MiB
+run 3:  wall 4.11 s  cpu 4.01 s  1216545 lines/s  123.6 MB/s  peak RSS 2.9 MiB
+run 4:  wall 4.11 s  cpu 4.01 s  1216545 lines/s  123.6 MB/s  peak RSS 3.3 MiB
+run 5:  wall 4.13 s  cpu 4.02 s  1210654 lines/s  123.0 MB/s  peak RSS 3.0 MiB
 
-median:  10.94 s  457038 lines/s  46.4 MB/s
+median:  4.13 s  1210654 lines/s  123.0 MB/s
 
-reference:  wc -l          wall 0.74 s  cpu 0.65 s
-reference:  grep -c ERROR  wall 3.10 s  cpu 2.77 s
+reference:  wc -l          wall 0.70 s  cpu 0.68 s
+reference:  grep -c ERROR  wall 3.03 s  cpu 2.95 s
 ```
 
 How to read this:
@@ -286,11 +286,8 @@ How to read this:
 - **Memory is the solid result.** Peak resident set size was about 3 MiB
   for a 508 MB file in every run. That is the buffers plus 33 templates;
   it does not depend on the size of the input.
-- **Throughput here is a lower bound, and a noisy one.** The laptop was busy
-  with unrelated work during these runs (load average between 50 and 90),
-  which is why the runs differ by almost a factor of three. The median was
-  457,000 lines/s (46 MB/s) and the best run 1,144,000 lines/s (116 MB/s).
-  I have not measured it on an idle machine, so I make no claim about that.
+- **Throughput was about 1.21 million lines/s (123 MB/s)**, single-threaded,
+  on an otherwise quiet machine. The five runs agree to within 1%.
 - The two reference lines put the same file through `wc -l` and
   `grep -c ERROR` right after the measured runs, as a rough gauge of the
   machine at that moment. They are not a like-for-like comparison: those
