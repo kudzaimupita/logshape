@@ -15,7 +15,7 @@
 //! the scan window. Lower-case and capitalised words are common in prose
 //! ("no error found"), so they only count when the line marks them as a
 //! level: wrapped in brackets (`[error]`), followed by a colon (`error:`),
-//! or given as a value (`level=error`).
+//! or given as a value (`level=error`, `"level":"error"`).
 
 use std::fmt;
 use std::str::FromStr;
@@ -178,13 +178,17 @@ fn is_marked(line: &[u8], start: usize, end: usize) -> bool {
     is_level_value(&line[..start])
 }
 
-/// Whether `prefix` ends with `level=`, `lvl=` or `severity=`, optionally
-/// followed by an opening quote.
+/// Whether `prefix` ends with a key such as `level=`, `lvl=` or `severity=`,
+/// allowing `:` for `=` and quotes around either side (`"level":"`).
 fn is_level_value(prefix: &[u8]) -> bool {
     let prefix = prefix.strip_suffix(b"\"").unwrap_or(prefix);
-    let Some(prefix) = prefix.strip_suffix(b"=") else {
+    let Some(prefix) = prefix
+        .strip_suffix(b"=")
+        .or_else(|| prefix.strip_suffix(b":"))
+    else {
         return false;
     };
+    let prefix = prefix.strip_suffix(b"\"").unwrap_or(prefix);
     [&b"level"[..], b"lvl", b"severity"].iter().any(|key| {
         prefix.len() >= key.len() && prefix[prefix.len() - key.len()..].eq_ignore_ascii_case(key)
     })
@@ -241,6 +245,8 @@ mod tests {
         assert_eq!(plain("ts=1 level=info msg=ok"), Some(Level::Info));
         assert_eq!(plain("lvl=\"debug\" msg=ok"), Some(Level::Debug));
         assert_eq!(plain("log.level=warn"), Some(Level::Warn));
+        assert_eq!(plain(r#"{"level":"error","msg":"cut"#), Some(Level::Error));
+        assert_eq!(plain("severity: warning"), None);
         assert_eq!(plain("[core:error] [pid 1] boom"), Some(Level::Error));
     }
 
