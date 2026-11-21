@@ -1,0 +1,23 @@
+[package]
+name = "logshape"
+version = "0.1.0"
+edition = "2021"
+description = "Shows the shape of a log file: line templates, levels, a time histogram and error bursts, in one streaming pass"
+license = "Apache-2.0"
+readme = "README.md"
+keywords = ["log", "cli", "templates", "histogram"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+flate2 = "1"
+memchr = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+assert_cmd = "2"
+
+[profile.release]
+lto = true
+codegen-units = 1
