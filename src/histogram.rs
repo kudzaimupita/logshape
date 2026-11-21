@@ -17,7 +17,7 @@ use std::collections::HashMap;
 /// Upper bound on buckets held while reading, in automatic mode.
 pub const MAX_LIVE_BUCKETS: i64 = 4096;
 /// Automatic mode finishes with at most this many buckets.
-pub const TARGET_BUCKETS: i64 = 60;
+pub const TARGET_BUCKETS: i64 = 40;
 /// A burst bucket has at least this many error lines.
 pub const BURST_MIN_ERRORS: u64 = 5;
 /// A burst bucket has at least this many times the median error count.

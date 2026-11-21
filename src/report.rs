@@ -121,11 +121,22 @@ fn bar(value: u64, max: u64) -> String {
     "█".repeat(cells as usize)
 }
 
+/// Cuts `text` to `max` characters and replaces control characters, so a
+/// log line cannot send escape sequences to the terminal.
 fn cut(text: &str, max: usize) -> String {
-    match text.char_indices().nth(max) {
-        Some((end, _)) => format!("{}…", &text[..end]),
-        None => text.to_owned(),
+    let mut out: String = text
+        .chars()
+        .take(max)
+        .map(|c| match c {
+            '\t' => ' ',
+            c if c.is_control() => '\u{fffd}',
+            c => c,
+        })
+        .collect();
+    if text.chars().nth(max).is_some() {
+        out.push('…');
     }
+    out
 }
 
 /// Bucket start, with only as much precision as the bucket size needs.
@@ -244,7 +255,14 @@ pub fn write_text(summary: &Summary, color: bool, out: &mut dyn Write) -> io::Re
                     } else {
                         for k in 1..=empty {
                             let start = prev + k * h.bucket_seconds;
-                            writeln!(out, "  {}", bucket_label(start, h.bucket_seconds))?;
+                            writeln!(
+                                out,
+                                "  {}  {:<width$} {:>10}",
+                                bucket_label(start, h.bucket_seconds),
+                                "",
+                                0,
+                                width = BAR_WIDTH as usize
+                            )?;
                         }
                     }
                 }
@@ -378,6 +396,13 @@ mod tests {
         assert_eq!(bar(10, 10).chars().count(), BAR_WIDTH as usize);
         assert_eq!(bar(1, 1_000_000).chars().count(), 1);
         assert_eq!(bar(5, 10).chars().count(), BAR_WIDTH as usize / 2);
+    }
+
+    #[test]
+    fn cut_shortens_and_strips_control_characters() {
+        assert_eq!(cut("abcdef", 3), "abc…");
+        assert_eq!(cut("abc", 3), "abc");
+        assert_eq!(cut("a\tb\x1b[31mc\x00", 20), "a b\u{fffd}[31mc\u{fffd}");
     }
 
     #[test]
