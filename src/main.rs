@@ -2,7 +2,8 @@ use std::io::{self, BufWriter, IsTerminal, Write};
 use std::process::ExitCode;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use clap::Parser;
+use clap::error::ErrorKind;
+use clap::{CommandFactory, Parser};
 
 use logshape::analyze::{Analyzer, Options};
 use logshape::input::{self, LineReader};
@@ -76,10 +77,23 @@ fn parse_bucket(text: &str) -> Result<i64, String> {
     }
 }
 
-fn parse_time(flag: &str, text: &str, year: i32) -> Result<i64, String> {
-    timestamp::parse_whole(text, year).ok_or_else(|| {
-        format!("invalid value '{text}' for '{flag}': expected a time such as 2024-01-15T10:00:00Z or 2024-01-15")
-    })
+/// Parses `--since` or `--until`, leaving through clap's usage error (exit
+/// code 2) when the value is not a time.
+fn parse_time(flag: &str, text: Option<&str>, year: i32) -> Option<i64> {
+    let text = text?;
+    let parsed = timestamp::parse_whole(text, year);
+    if parsed.is_none() {
+        Cli::command()
+            .error(
+                ErrorKind::ValueValidation,
+                format!(
+                    "invalid value '{text}' for '{flag} <TIME>': \
+                     expected a time such as 2024-01-15T10:00:00Z or 2024-01-15"
+                ),
+            )
+            .exit();
+    }
+    parsed
 }
 
 fn run(cli: Cli) -> Result<(), String> {
@@ -89,16 +103,8 @@ fn run(cli: Cli) -> Result<(), String> {
             .map_or(0, |d| d.as_secs() as i64);
         timestamp::year_of(now)
     });
-    let since = cli
-        .since
-        .as_deref()
-        .map(|s| parse_time("--since", s, year))
-        .transpose()?;
-    let until = cli
-        .until
-        .as_deref()
-        .map(|s| parse_time("--until", s, year))
-        .transpose()?;
+    let since = parse_time("--since", cli.since.as_deref(), year);
+    let until = parse_time("--until", cli.until.as_deref(), year);
 
     let mut analyzer = Analyzer::new(Options {
         top: cli.top,
